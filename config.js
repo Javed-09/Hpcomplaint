@@ -13,7 +13,7 @@
 const HPB_CONFIG = {
 
   /* ▶▶ PASTE YOUR GOOGLE APPS SCRIPT WEB APP URL BETWEEN THESE QUOTES ◀◀ */
-  APPS_SCRIPT_URL: "",
+  APPS_SCRIPT_URL: "https://script.google.com/macros/s/AKfycbz-KUXtuFyjuUz-bewbNmU9N0Nm8-2LBe2KCyKmCJA4WGJznanq7OOuzhRt_LKb6xSq/exec",
 
   /* Branding ------------------------------------------------------------- */
   BRAND_NAME: "Huff & Puff Burger",
