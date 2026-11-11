@@ -1,0 +1,601 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="theme-color" content="#0f0f11">
+<meta name="description" content="Customer complaint management dashboard for Huff & Puff Burger (UAE). HTML/CSS/JS + Google Sheets.">
+<title>Huff &amp; Puff Burger — Complaint Management</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%23F97316'/%3E%3Ctext x='16' y='21' font-family='Arial' font-size='11' font-weight='bold' fill='%23171717' text-anchor='middle'%3EHPB%3C/text%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<noscript>
+  <div style="padding:24px;font-family:Arial,sans-serif">
+    <strong>JavaScript is required.</strong> This application needs JavaScript enabled to run.
+  </div>
+</noscript>
+
+<!-- ======================= LOGIN SCREEN =======================
+     Shown before the app boots when LOGIN.ENABLED is true in config.js.
+     The whole app stays hidden until the correct password is entered. -->
+<div id="login-screen" class="login-screen hidden" aria-label="Sign in">
+  <div class="login-card" id="login-card">
+    <div class="login-logo">HPB</div>
+    <h2 class="login-title">Huff &amp; Puff Burger</h2>
+    <p class="login-sub">Complaint Management &middot; Sign in to continue</p>
+
+    <div class="field">
+      <label for="login-pass">Password</label>
+      <div class="lock-row">
+        <input id="login-pass" class="inp" type="password" autocomplete="current-password" placeholder="Enter the site password">
+        <button type="button" class="btn ghost" id="login-eye" aria-label="Show or hide password">Show</button>
+      </div>
+      <p class="field-error" id="login-err"></p>
+    </div>
+
+    <label class="check-row" id="login-remember-row">
+      <input type="checkbox" id="login-remember"> Keep me signed in on this device
+    </label>
+
+    <button class="btn primary login-btn" id="login-go">Sign in</button>
+
+    <p class="login-note">Forgot the password? It is set in the file
+      <code>config.js</code> &rarr; <code>LOGIN.PASSWORD</code>.</p>
+  </div>
+  <p class="login-foot"><span id="login-version">v1.3.0</span> &middot; Huff &amp; Puff Burger</p>
+</div>
+
+<div class="app" id="app">
+
+  <!-- Mobile overlay behind the sidebar -->
+  <div id="sidebar-overlay" class="sidebar-overlay"></div>
+
+  <!-- ======================= SIDEBAR ======================= -->
+  <aside class="sidebar" id="sidebar" aria-label="Main navigation">
+    <div class="brand">
+      <div class="brand-logo">HPB</div>
+      <div class="brand-text">
+        <strong>Huff &amp; Puff Burger</strong>
+        <span>Complaint Management</span>
+      </div>
+    </div>
+
+    <nav class="nav" id="nav"><!-- links built by script.js --></nav>
+
+    <div class="sidebar-foot">
+      <div id="mode-pill" class="mode-pill demo">DEMO MODE</div>
+      <div class="version" id="version-label">v1.0.0</div>
+    </div>
+  </aside>
+
+  <!-- ======================= MAIN COLUMN ======================= -->
+  <div class="main">
+
+    <header class="topbar">
+      <button id="btn-menu" class="icon-btn only-mobile" aria-label="Toggle menu"></button>
+      <h1 id="page-title">Dashboard</h1>
+      <div class="topbar-right">
+        <span id="sync-info" class="sync-info"></span>
+        <button id="btn-refresh" class="icon-btn" title="Reload data from database" aria-label="Reload data"></button>
+        <button id="btn-logout" class="btn ghost logout-btn hidden" title="Sign out and show the login screen">Log out</button>
+        <div id="user-chip" class="user-chip" title="Set your name in Settings">HP</div>
+      </div>
+    </header>
+
+    <!-- Demo-mode warning banner -->
+    <div id="demo-banner" class="banner hidden">
+      <strong>Demo Mode.</strong>
+      Data is saved only in this browser (localStorage) and is <strong>&nbsp;NOT&nbsp;</strong> shared
+      with other computers or users. Connect the Google Sheets database in
+      <a href="#" data-nav="settings">Settings</a> to go live. Demo records are fictional.
+    </div>
+
+    <!-- Connection error banner -->
+    <div id="error-banner" class="banner error hidden"></div>
+
+    <main id="page-content" class="content">
+
+      <!-- ================= 1. DASHBOARD ================= -->
+      <section class="page" id="page-dashboard">
+        <div class="page-head">
+          <div>
+            <h2>Operations overview</h2>
+            <p class="muted">All figures are calculated live from saved complaint records.</p>
+          </div>
+          <div class="head-actions">
+            <button class="btn" data-nav="register">+ Register complaint</button>
+            <button class="btn primary" data-nav="complaints">All complaints</button>
+          </div>
+        </div>
+
+        <div class="kpi-grid" id="kpi-grid"><!-- KPI cards by script.js --></div>
+
+        <div class="chart-grid">
+          <div class="card chart-card span-2">
+            <div class="card-head"><h3>Complaints by day</h3><span class="muted small">last 14 days</span></div>
+            <div class="chart-box"><canvas id="chart-days" aria-label="Complaints by day chart"></canvas></div>
+          </div>
+          <div class="card chart-card">
+            <div class="card-head"><h3>Complaints by branch</h3></div>
+            <div class="chart-box tall"><canvas id="chart-branch" aria-label="Complaints by branch chart"></canvas></div>
+          </div>
+          <div class="card chart-card">
+            <div class="card-head"><h3>Complaints by category</h3></div>
+            <div class="chart-box"><canvas id="chart-category" aria-label="Complaints by category chart"></canvas></div>
+          </div>
+          <div class="card chart-card">
+            <div class="card-head"><h3>Complaints by source</h3></div>
+            <div class="chart-box"><canvas id="chart-source" aria-label="Complaints by source chart"></canvas></div>
+          </div>
+          <div class="card chart-card">
+            <div class="card-head"><h3>Status distribution</h3></div>
+            <div class="chart-box"><canvas id="chart-status" aria-label="Complaint status distribution chart"></canvas></div>
+          </div>
+        </div>
+
+        <div class="card-grid-2">
+          <div class="card">
+            <div class="card-head"><h3>Recent complaints</h3></div>
+            <div id="dash-recent" class="list"></div>
+          </div>
+          <div class="card">
+            <div class="card-head"><h3>Urgent complaints</h3><span class="count-badge red" id="count-urgent"></span></div>
+            <div id="dash-urgent" class="list"></div>
+          </div>
+          <div class="card">
+            <div class="card-head"><h3>Overdue follow-ups</h3><span class="count-badge red" id="count-overdue"></span></div>
+            <div id="dash-overdue" class="list"></div>
+          </div>
+          <div class="card">
+            <div class="card-head"><h3>Top 5 branches by complaints</h3></div>
+            <div id="dash-topbranches" class="list"></div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ================= 2. REGISTER COMPLAINT ================= -->
+      <section class="page hidden" id="page-register">
+        <div class="page-head">
+          <div>
+            <h2>Register complaint</h2>
+            <p class="muted">Fields marked <span class="req">*</span> are required. The complaint ID is generated automatically.</p>
+          </div>
+        </div>
+
+        <div id="edit-banner" class="edit-banner hidden">
+          Editing complaint <strong id="edit-banner-id"></strong>
+          <button type="button" class="btn small" id="btn-cancel-edit">Cancel editing</button>
+        </div>
+
+        <form id="complaint-form" class="card form-card" novalidate>
+          <h3 class="form-section">Complaint</h3>
+          <div class="form-grid">
+            <div class="field">
+              <label for="f-id">Complaint ID</label>
+              <input id="f-id" class="inp" type="text" readonly>
+              <p class="hint" id="f-id-hint">Assigned automatically on save.</p>
+            </div>
+            <div class="field">
+              <label for="f-datetime">Date &amp; time received <span class="req">*</span></label>
+              <input id="f-datetime" class="inp" type="datetime-local" required>
+              <p class="field-error"></p>
+            </div>
+            <div class="field">
+              <label for="f-source">Complaint source <span class="req">*</span></label>
+              <select id="f-source" class="inp" required></select>
+              <p class="field-error"></p>
+            </div>
+            <div class="field">
+              <label for="f-branch">Branch <span class="req">*</span></label>
+              <select id="f-branch" class="inp" required></select>
+              <p class="field-error"></p>
+            </div>
+            <div class="field">
+              <label for="f-category">Complaint category <span class="req">*</span></label>
+              <select id="f-category" class="inp" required></select>
+              <p class="field-error"></p>
+            </div>
+            <div class="field">
+              <label for="f-priority">Priority <span class="req">*</span></label>
+              <select id="f-priority" class="inp" required></select>
+              <p class="field-error"></p>
+            </div>
+            <div class="field span-2">
+              <label for="f-description">Complaint description <span class="req">*</span></label>
+              <textarea id="f-description" class="inp" rows="4" required
+                placeholder="What happened? Include facts, times, staff involved and what the customer expects."></textarea>
+              <p class="field-error"></p>
+            </div>
+          </div>
+
+          <h3 class="form-section">Order details</h3>
+          <div class="form-grid">
+            <div class="field">
+              <label for="f-order-number">Order number</label>
+              <input id="f-order-number" class="inp" type="text" placeholder="e.g. TLB-88213">
+            </div>
+            <div class="field">
+              <label for="f-order-datetime">Order date &amp; time</label>
+              <input id="f-order-datetime" class="inp" type="datetime-local">
+            </div>
+            <div class="field">
+              <label for="f-platform">Delivery platform</label>
+              <select id="f-platform" class="inp"></select>
+            </div>
+          </div>
+
+          <h3 class="form-section">Customer</h3>
+          <div class="form-grid">
+            <div class="field">
+              <label for="f-customer">Customer name <span class="req">*</span></label>
+              <input id="f-customer" class="inp" type="text" required>
+              <p class="field-error"></p>
+            </div>
+            <div class="field">
+              <label for="f-phone">Customer phone <span class="req">*</span></label>
+              <input id="f-phone" class="inp" type="tel" placeholder="+971 5X XXX XXXX" required>
+              <p class="field-error"></p>
+            </div>
+            <div class="field">
+              <label for="f-review-url">Google review URL</label>
+              <input id="f-review-url" class="inp" type="url" placeholder="https://maps.google.com/...">
+              <p class="field-error"></p>
+            </div>
+            <div class="field">
+              <label for="f-employee">Reported by employee</label>
+              <input id="f-employee" class="inp" type="text" placeholder="e.g. Ayesha K. (Call Centre)">
+            </div>
+          </div>
+
+          <h3 class="form-section">Handling</h3>
+          <div class="form-grid">
+            <div class="field">
+              <label for="f-callback">Callback required</label>
+              <select id="f-callback" class="inp">
+                <option value="No">No</option>
+                <option value="Yes">Yes</option>
+              </select>
+            </div>
+            <div class="field">
+              <label for="f-branch-contact">Assigned branch contact</label>
+              <input id="f-branch-contact" class="inp" type="text" placeholder="Contact person at the branch">
+            </div>
+            <div class="field">
+              <label for="f-followup">Follow-up due date</label>
+              <input id="f-followup" class="inp" type="date">
+            </div>
+          </div>
+
+          <div class="form-actions">
+            <button type="submit" class="btn primary" id="btn-form-submit">Register complaint</button>
+            <button type="button" class="btn" id="btn-form-reset">Reset form</button>
+          </div>
+        </form>
+      </section>
+
+      <!-- ================= 3. ALL COMPLAINTS ================= -->
+      <section class="page hidden" id="page-complaints">
+        <div class="page-head">
+          <div>
+            <h2>All complaints</h2>
+            <p class="muted">Search, filter, sort and manage every registered complaint.</p>
+          </div>
+          <div class="head-actions">
+            <button class="btn" id="btn-export-csv">Export CSV</button>
+            <button class="btn primary" data-nav="register">+ New complaint</button>
+          </div>
+        </div>
+
+        <div class="toolbar card">
+          <div class="search-box" id="search-box">
+            <input id="q" class="inp" type="search" placeholder="Search ID, customer, phone, order no., text..." aria-label="Search complaints">
+          </div>
+          <select id="flt-status" class="inp" aria-label="Filter by status"></select>
+          <select id="flt-branch" class="inp" aria-label="Filter by branch"></select>
+          <select id="flt-category" class="inp" aria-label="Filter by category"></select>
+          <select id="flt-priority" class="inp" aria-label="Filter by priority"></select>
+          <select id="flt-source" class="inp" aria-label="Filter by source"></select>
+          <input id="flt-from" class="inp" type="date" aria-label="From date" title="From date">
+          <input id="flt-to" class="inp" type="date" aria-label="To date" title="To date">
+          <button id="flt-clear" class="btn ghost">Clear</button>
+        </div>
+
+        <div class="card table-card">
+          <div class="table-wrap">
+            <table class="table" id="complaints-table">
+              <thead>
+                <tr>
+                  <th data-sort="id">Complaint ID</th>
+                  <th data-sort="dateTime">Date</th>
+                  <th data-sort="source">Source</th>
+                  <th data-sort="branch">Branch</th>
+                  <th data-sort="category">Category</th>
+                  <th data-sort="priority">Priority</th>
+                  <th data-sort="customerName">Customer</th>
+                  <th data-sort="status">Status</th>
+                  <th data-sort="followUpDate">Follow-up</th>
+                  <th class="th-actions">Actions</th>
+                </tr>
+              </thead>
+              <tbody id="complaints-tbody"></tbody>
+            </table>
+          </div>
+          <div class="table-foot">
+            <div id="pg-info" class="muted small"></div>
+            <div class="pg-controls">
+              <select id="pg-size" class="inp small" aria-label="Rows per page">
+                <option value="10">10 / page</option>
+                <option value="25">25 / page</option>
+                <option value="50">50 / page</option>
+                <option value="100">100 / page</option>
+              </select>
+              <button id="pg-prev" class="btn small">Prev</button>
+              <button id="pg-next" class="btn small">Next</button>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ================= 4. FOLLOW-UPS ================= -->
+      <section class="page hidden" id="page-followups">
+        <div class="page-head">
+          <div>
+            <h2>Follow-ups</h2>
+            <p class="muted">Update follow-up dates and notes directly from this page.</p>
+          </div>
+        </div>
+
+        <div class="tabs" id="fup-tabs">
+          <button class="tab active" data-fup-tab="today">Today <span class="tab-count" id="tc-today">0</span></button>
+          <button class="tab" data-fup-tab="overdue">Overdue <span class="tab-count red" id="tc-overdue">0</span></button>
+          <button class="tab" data-fup-tab="upcoming">Next 7 days <span class="tab-count" id="tc-upcoming">0</span></button>
+          <button class="tab" data-fup-tab="branch">Waiting: branch <span class="tab-count" id="tc-branch">0</span></button>
+          <button class="tab" data-fup-tab="customer">Waiting: customer <span class="tab-count" id="tc-customer">0</span></button>
+        </div>
+
+        <div id="fup-content"></div>
+      </section>
+
+      <!-- ================= 5. BRANCH MANAGEMENT ================= -->
+      <section class="page hidden" id="page-branches">
+        <div class="page-head">
+          <div>
+            <h2>Branch management</h2>
+            <p class="muted" id="branch-count-note"></p>
+          </div>
+          <div class="head-actions">
+            <button class="btn primary" id="btn-add-branch">+ Add branch</button>
+          </div>
+        </div>
+
+        <div class="card table-card">
+          <div class="table-wrap">
+            <table class="table">
+              <thead>
+                <tr>
+                  <th>Branch</th>
+                  <th>Contact person</th>
+                  <th>Phone</th>
+                  <th>Complaints</th>
+                  <th>Open</th>
+                  <th>Active</th>
+                  <th class="th-actions">Actions</th>
+                </tr>
+              </thead>
+              <tbody id="branches-tbody"></tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <!-- ================= 6. DAILY REPORT ================= -->
+      <section class="page hidden" id="page-daily">
+        <div class="page-head">
+          <div>
+            <h2>Daily report</h2>
+            <p class="muted">One-day snapshot with branch and category breakdowns.</p>
+          </div>
+          <div class="head-actions">
+            <input id="daily-date" class="inp" type="date" aria-label="Report date">
+            <button class="btn" id="daily-print">Print</button>
+            <button class="btn" id="daily-csv">Export CSV</button>
+          </div>
+        </div>
+
+        <div class="kpi-grid small" id="daily-cards"></div>
+
+        <div class="card-grid-2">
+          <div class="card">
+            <div class="card-head"><h3>Branch-wise breakdown</h3></div>
+            <div class="table-wrap">
+              <table class="table slim">
+                <thead><tr><th>Branch</th><th>Received</th><th>Resolved</th><th>Open</th><th>Urgent</th><th>Overdue</th></tr></thead>
+                <tbody id="daily-branch-tbody"></tbody>
+              </table>
+            </div>
+          </div>
+          <div class="card">
+            <div class="card-head"><h3>Category breakdown</h3></div>
+            <div class="table-wrap">
+              <table class="table slim">
+                <thead><tr><th>Category</th><th>Received</th><th>Resolved</th><th>Share</th></tr></thead>
+                <tbody id="daily-cat-tbody"></tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ================= 7. WEEKLY REPORT ================= -->
+      <section class="page hidden" id="page-weekly">
+        <div class="page-head">
+          <div>
+            <h2>Weekly report</h2>
+            <p class="muted">Choose any date range. Defaults to the current week (Mon–Sun).</p>
+          </div>
+          <div class="head-actions">
+            <label class="inline-label">From <input id="weekly-from" class="inp" type="date" aria-label="From date"></label>
+            <label class="inline-label">To <input id="weekly-to" class="inp" type="date" aria-label="To date"></label>
+            <button class="btn" id="weekly-print">Print</button>
+            <button class="btn" id="weekly-csv">Export CSV</button>
+          </div>
+        </div>
+
+        <div class="kpi-grid small" id="weekly-cards"></div>
+
+        <div class="card-grid-2">
+          <div class="card">
+            <div class="card-head"><h3>Branch comparison</h3></div>
+            <div class="table-wrap">
+              <table class="table slim">
+                <thead><tr><th>Branch</th><th>Received</th><th>Resolved</th><th>Outstanding</th><th>Urgent</th><th>Avg days</th></tr></thead>
+                <tbody id="weekly-branch-tbody"></tbody>
+              </table>
+            </div>
+          </div>
+          <div class="card">
+            <div class="card-head"><h3>Category comparison</h3></div>
+            <div class="table-wrap">
+              <table class="table slim">
+                <thead><tr><th>Category</th><th>Received</th><th>Resolved</th><th>Share</th></tr></thead>
+                <tbody id="weekly-cat-tbody"></tbody>
+              </table>
+            </div>
+          </div>
+          <div class="card">
+            <div class="card-head"><h3>Source comparison</h3></div>
+            <div class="table-wrap">
+              <table class="table slim">
+                <thead><tr><th>Source</th><th>Received</th><th>Share</th></tr></thead>
+                <tbody id="weekly-src-tbody"></tbody>
+              </table>
+            </div>
+          </div>
+          <div class="card">
+            <div class="card-head"><h3>Repeat complaint branches</h3></div>
+            <p class="muted small pad-x">Customers with 2 or more complaints inside the selected range.</p>
+            <div class="table-wrap">
+              <table class="table slim">
+                <thead><tr><th>Branch</th><th>Repeat customers</th><th>Repeat complaints</th></tr></thead>
+                <tbody id="weekly-repeat-tbody"></tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ================= 8. SETTINGS ================= -->
+      <section class="page hidden" id="page-settings">
+        <div class="page-head">
+          <div>
+            <h2>Settings</h2>
+            <p class="muted">Connection, preferences and data tools.</p>
+          </div>
+          <div class="head-actions">
+            <button class="btn ghost" id="btn-lock-settings" title="Lock the Settings page again">Lock settings</button>
+          </div>
+        </div>
+
+        <div class="settings-grid">
+
+          <div class="card">
+            <h3>Google Sheets connection</h3>
+            <div id="conn-status"></div>
+            <div class="field">
+              <label for="set-url">Google Apps Script Web App URL</label>
+              <input id="set-url" class="inp" type="url" placeholder="https://script.google.com/macros/s/.../exec">
+              <p class="hint">Leave empty to use Demo Mode. See README.md for the full setup guide (create Sheet → add Apps Script → deploy as Web App → paste URL here).</p>
+            </div>
+            <div class="btn-row">
+              <button class="btn primary" id="set-save-url">Save &amp; connect</button>
+              <button class="btn" id="set-test">Test connection</button>
+              <button class="btn danger ghost" id="set-clear-url">Disconnect (use demo mode)</button>
+            </div>
+            <div class="note warn">
+              <strong>Security note.</strong> A Google Apps Script Web App used this way is a public endpoint:
+              anyone who obtains the URL can read and write all complaint data. A secret stored in this
+              frontend's JavaScript is <strong>not</strong> secure (it is visible in the page source). Keep the
+              URL private and share it only with authorised coordinators. Static hosting cannot provide real
+              user authentication — see README.md for details and alternatives.
+            </div>
+          </div>
+
+          <div class="card">
+            <h3>Preferences</h3>
+            <p class="muted small">Saved automatically in this browser.</p>
+            <div class="field">
+              <label for="set-name">Your name (recorded in complaint history)</label>
+              <input id="set-name" class="inp" type="text" placeholder="e.g. Ayesha K.">
+            </div>
+            <div class="field">
+              <label for="set-rows">Rows per page (complaint table)</label>
+              <select id="set-rows" class="inp">
+                <option value="10">10</option>
+                <option value="25">25</option>
+                <option value="50">50</option>
+                <option value="100">100</option>
+              </select>
+            </div>
+            <div class="field">
+              <label for="set-followup-days">Default follow-up window (days)</label>
+              <input id="set-followup-days" class="inp" type="number" min="1" max="30">
+            </div>
+          </div>
+
+          <div class="card">
+            <h3>Data tools</h3>
+            <p class="muted small" id="settings-mode-note"></p>
+            <div class="btn-col">
+              <button class="btn" id="btn-backup">Export backup (JSON)</button>
+              <button class="btn" id="btn-import">Import backup (demo mode only)</button>
+              <input id="import-file" type="file" accept="application/json,.json" class="hidden">
+              <button class="btn" id="btn-load-demo">Load demo dataset</button>
+              <button class="btn danger" id="btn-clear-demo">Clear all data (demo mode only)</button>
+              <button class="btn" id="btn-reload-live">Reload from Google Sheets</button>
+            </div>
+            <div class="note">
+              Demo data lives in <code>localStorage</code> only and is clearly labelled. Real complaints in
+              Google Sheets are never mixed with demo records. Regular backups via "Export backup (JSON)"
+              are recommended.
+            </div>
+          </div>
+
+          <div class="card">
+            <h3>About</h3>
+            <p class="small">
+              <strong>Huff &amp; Puff Burger — Complaint Management System</strong><br>
+              Version <span id="about-version"></span><br>
+              Static website: HTML5 + CSS3 + vanilla JavaScript (no frameworks, no build tools).<br>
+              Database: Google Sheets via Google Apps Script Web App (free), with a clearly-labelled
+              browser-only Demo Mode fallback.<br>
+              Charts by Chart.js (free CDN) — the app keeps working if the CDN is unavailable.
+            </p>
+            <p class="muted small">
+              Files: index.html · style.css · script.js · config.js · demo-data.js · google-apps-script.gs · README.md
+            </p>
+          </div>
+
+        </div>
+      </section>
+
+    </main>
+  </div>
+</div>
+
+<!-- Modal / confirm / toast / print roots -->
+<div id="modal-root"></div>
+<div id="confirm-root"></div>
+<div id="toast-root" class="toast-root" aria-live="polite"></div>
+<div id="print-area"></div>
+
+<!-- Chart.js from free CDN; the app degrades gracefully if unavailable -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+<script src="config.js"></script>
+<script src="demo-data.js"></script>
+<script src="script.js"></script>
+</body>
+</html>
