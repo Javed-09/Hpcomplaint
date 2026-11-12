@@ -36,7 +36,7 @@ const HPB_CONFIG = {
      the site URL (and this file) shared only with trusted staff, and see
      README.md §6 "Security limitations" for the full picture. ------------ */
   SETTINGS_LOCK: {
-    ENABLED: false,
+    ENABLED: true,
     PASSWORD: "hpb-admin"          /* ← CHANGE THIS before going live */
   },
 
@@ -100,7 +100,7 @@ const HPB_CONFIG = {
   /* Fixed option lists ---------------------------------------------------- */
   SOURCES: [
     "Call Centre", "WhatsApp", "Instagram", "Facebook",
-    "Google Review", "Email", "Branch", "Other"
+    "Google Review", "Email", "Branch", "Other", "Branch"
   ],
 
   CATEGORIES: [
