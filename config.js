@@ -36,7 +36,7 @@ const HPB_CONFIG = {
      the site URL (and this file) shared only with trusted staff, and see
      README.md §6 "Security limitations" for the full picture. ------------ */
   SETTINGS_LOCK: {
-    ENABLED: true,
+    ENABLED: false,
     PASSWORD: "hpb-admin"          /* ← CHANGE THIS before going live */
   },
 
