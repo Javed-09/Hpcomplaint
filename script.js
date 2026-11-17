@@ -248,7 +248,7 @@ function showSettingsLock() {
     '<div class="modal-head"><h3>' + icon('lock') + ' Settings locked</h3></div>' +
     '<div class="modal-body">' +
       '<p class="muted small">Enter the administrator password to open Settings. ' +
-      'The password is set in <code>config.js</code> (SETTINGS_LOCK).</p>' +
+      'The password is set by <code>Admin</code> (SETTINGS_LOCK).</p>' +
       '<div class="field">' +
         '<label for="lock-pass">Password</label>' +
         '<div class="lock-row">' +
