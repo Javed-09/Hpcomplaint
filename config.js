@@ -37,7 +37,7 @@ const HPB_CONFIG = {
      README.md §6 "Security limitations" for the full picture. ------------ */
   SETTINGS_LOCK: {
     ENABLED: true,
-    PASSWORD: "hpb-admin"          /* ← CHANGE THIS before going live */
+    PASSWORD: "Admin@12345"          /* ← CHANGE THIS before going live */
   },
 
   /* Site login -------------------------------------------------------------
