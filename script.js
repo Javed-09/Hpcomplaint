@@ -1365,7 +1365,7 @@ function askDeletePassword(id) {
       '<div class="modal-head"><h3>' + icon('lock') + ' Deletion restricted</h3></div>' +
       '<div class="modal-body">' +
         '<p class="muted small">Only the administrator can delete complaints. Enter the admin password ' +
-        'to delete <strong>' + esc(id) + '</strong>. The password is set in <code>config.js</code>.</p>' +
+        'to delete <strong>' + esc(id) + '</strong>. The password is with <code>Admin</code>.</p>' +
         '<div class="field">' +
           '<label for="del-pass">Administrator password</label>' +
           '<div class="lock-row">' +
